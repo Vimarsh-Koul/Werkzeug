@@ -8,6 +8,10 @@ from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.utils import redirect
 from jinja2 import Environment, FileSystemLoader
 
+
+endpoint = 'follow_short_link'
+values = {'short_id': u'foo'}
+
 class shortly:
 
     def __init__(self,config):
@@ -18,11 +22,11 @@ class shortly:
 
     def render_template(self,template_name,**context):
         t=self.jinja_env.get_template(template_name)
-        return response(t.render(context),mimetype='text/html')  
+        return Response(t.render(context),mimetype='text/html')  
 
 
     def dispatgh_request(self,request):
-        adapter = self.url_map.bind_to_enviorn(request.environ)
+        adapter = self.url_map.bind_to_environ(request.environ)
         try:
             endpoint, values = adapter.match()
             return getattr(self,'on_'+endpoint)(request,**values)
@@ -90,9 +94,8 @@ class shortly:
     def __call__(self,environ,start_response):
         return self.wsgi_app(environ,start_response)
 
-def create_app(redis_host='losthost',redis_port=6379,with_static=True):
+def create_app(redis_host='losthost',redis_port=9999,with_static=True):
     app = shortly({'redis_host':redis_host, 'redis_port':redis_port})
-
     if with_static:
         app.wsgi_app = SharedDataMiddleware(app.wsgi_app,{'/static': os.path.join(os.path.dirname(__file__),'static')})
         return app
